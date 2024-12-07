@@ -1,4 +1,4 @@
-import { auth, db } from './firebase-config.js';
+import { auth, db, initializeFirebase } from './firebase-config.js';
 import { signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
@@ -21,20 +21,23 @@ const boothCredentials = {
     }
 };
 
-// Check if already logged in and has valid booth type
-auth.onAuthStateChanged((user) => {
-    if (user) {
-        const boothType = localStorage.getItem('boothType');
-        if (boothType && boothCredentials[boothType]) {
-            window.location.href = boothCredentials[boothType].redirect;
-        } else {
-            // If boothType is invalid or missing, logout
-            auth.signOut().then(() => {
-                localStorage.removeItem('boothType');
-            });
+// Initialize Firebase and set up auth state listener
+async function initializeAuth() {
+    const { auth } = await initializeFirebase();
+    
+    // Check if already logged in and has valid booth type
+    auth.onAuthStateChanged((user) => {
+        if (user && window.location.pathname.includes('login.html')) {
+            const boothType = localStorage.getItem('boothType');
+            if (boothType && boothCredentials[boothType]) {
+                window.location.href = boothCredentials[boothType].redirect;
+            }
         }
-    }
-});
+    });
+}
+
+// Initialize authentication
+initializeAuth();
 
 loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -54,6 +57,9 @@ loginForm.addEventListener('submit', async (e) => {
 
         // Convert username to email format for Firebase Authentication
         const email = `${username}@mmcmcarnival.com`;
+        
+        // Get initialized auth instance
+        const { auth } = await initializeFirebase();
         
         // Attempt to sign in
         const userCredential = await signInWithEmailAndPassword(auth, email, password);

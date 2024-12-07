@@ -1,9 +1,12 @@
 :root {
-    --primary-color: #FF6B6B;
-    --secondary-color: #4ECDC4;
-    --accent-color: #FFE66D;
-    --dark-color: #2C3E50;
-    --light-color: #F7F9F9;
+    --primary-color: #FF4757;
+    --secondary-color: #2ED573;
+    --accent-color: #FECA57;
+    --dark-color: #2F3542;
+    --light-color: #F9F9F9;
+    --shadow-color: rgba(47, 53, 66, 0.1);
+    --gradient-start: #FF4757;
+    --gradient-end: #FF7F50;
 }
 
 * {
@@ -13,24 +16,28 @@
 }
 
 body {
-    font-family: 'Comic Sans MS', cursive, sans-serif;
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
     min-height: 100vh;
     padding: 2rem;
     color: var(--dark-color);
+    line-height: 1.6;
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
+    padding: 0 1.5rem;
 }
 
 .main-title {
     text-align: center;
-    font-size: 3rem;
+    font-size: 2.5rem;
     color: var(--light-color);
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
     margin-bottom: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
 }
 
 .booth-grid {
@@ -43,25 +50,95 @@ body {
 .booth-card {
     background: var(--light-color);
     padding: 2rem;
-    border-radius: 15px;
+    border-radius: 20px;
     text-align: center;
     text-decoration: none;
     color: var(--dark-color);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 20px var(--shadow-color);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.booth-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(to right, var(--primary-color), var(--accent-color));
+    transform: scaleX(0);
+    transform-origin: left;
     transition: transform 0.3s ease;
 }
 
 .booth-card:hover {
     transform: translateY(-5px);
+    border-color: var(--accent-color);
+}
+
+.booth-card:hover::before {
+    transform: scaleX(1);
 }
 
 .booth-card h2 {
     font-size: 1.8rem;
     margin-bottom: 1rem;
+    color: var(--primary-color);
+    font-weight: 600;
 }
 
 .booth-card p {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
+    color: var(--dark-color);
+    opacity: 0.9;
+}
+
+.action-button {
+    background: var(--primary-color);
+    color: var(--light-color);
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px var(--shadow-color);
+}
+
+.action-button:hover {
+    background: var(--gradient-end);
+    transform: translateY(-2px);
+}
+
+.input-group {
+    margin-bottom: 1.5rem;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--dark-color);
+    font-weight: 500;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 0.8rem;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    background: var(--light-color);
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(254, 202, 87, 0.2);
 }
 
 @media (max-width: 768px) {
@@ -71,5 +148,9 @@ body {
     
     .booth-grid {
         grid-template-columns: 1fr;
+    }
+    
+    .container {
+        padding: 0 1rem;
     }
 } 

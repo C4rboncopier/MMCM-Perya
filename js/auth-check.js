@@ -3,11 +3,20 @@ import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/fi
 
 // Function to redirect to login
 function redirectToLogin() {
-    window.location.href = '../pages/login.html';
+    // Don't redirect if we're already on the login page
+    if (!window.location.pathname.includes('login.html')) {
+        window.location.href = '../pages/login.html';
+    }
 }
 
 // Function to check booth access
 function checkBoothAccess(user) {
+    // Skip all checks if we're on the login page
+    if (window.location.pathname.includes('login.html')) {
+        return;
+    }
+
+    // If no user, redirect to login
     if (!user) {
         redirectToLogin();
         return;
@@ -15,7 +24,10 @@ function checkBoothAccess(user) {
 
     const boothType = localStorage.getItem('boothType');
     if (!boothType) {
-        auth.signOut().then(redirectToLogin);
+        auth.signOut().then(() => {
+            localStorage.removeItem('boothType');
+            redirectToLogin();
+        });
         return;
     }
 

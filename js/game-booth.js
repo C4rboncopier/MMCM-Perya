@@ -5,6 +5,26 @@ import { doc, getDoc, updateDoc, serverTimestamp } from 'https://www.gstatic.com
 const ticketForm = document.getElementById('ticketForm');
 const messageDiv = document.getElementById('message');
 const logoutBtn = document.getElementById('logoutBtn');
+const loadingText = document.querySelector('.loading-text');
+const ticketNumberInput = document.getElementById('ticketNumber');
+const submitButton = ticketForm.querySelector('button[type="submit"]');
+
+// Function to pad ticket number to 5 digits
+function padTicketNumber(number) {
+    return number.toString().padStart(5, '0');
+}
+
+// Function to show loading state
+function setLoading(isLoading) {
+    loadingText.classList.toggle('visible', isLoading);
+    submitButton.disabled = isLoading;
+    ticketNumberInput.disabled = isLoading;
+    
+    // Focus the input when loading is done
+    if (!isLoading) {
+        setTimeout(() => ticketNumberInput.focus(), 0);
+    }
+}
 
 // Add logout functionality
 logoutBtn.addEventListener('click', async () => {
@@ -18,9 +38,22 @@ logoutBtn.addEventListener('click', async () => {
     }
 });
 
+// Handle ticket number submission
 ticketForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const ticketNumber = document.getElementById('ticketNumber').value;
+    let ticketNumber = ticketNumberInput.value;
+    
+    // Validate that input is a number
+    if (!/^\d+$/.test(ticketNumber)) {
+        showMessage('Please enter a valid number', 'error');
+        return;
+    }
+
+    // Show loading state
+    setLoading(true);
+
+    // Pad the ticket number to 5 digits
+    ticketNumber = padTicketNumber(ticketNumber);
 
     try {
         const ticketRef = doc(db, 'tickets', ticketNumber);
@@ -28,14 +61,36 @@ ticketForm.addEventListener('submit', async (e) => {
 
         if (!ticketSnap.exists()) {
             showMessage('Ticket not found!', 'error');
+            setLoading(false);
+            ticketNumberInput.value = '';
+            ticketNumberInput.focus();
             return;
         }
 
         const ticketData = ticketSnap.data();
-        if (ticketData.status !== 'Released' || 
-            ticketData.state !== 'Unused' || 
-            ticketData.claim !== 'Unclaimed') {
-            showMessage('Invalid ticket status!', 'error');
+        
+        // Check specific ticket states and show appropriate messages
+        if (ticketData.status !== 'Released') {
+            showMessage('Invalid ticket!', 'error');
+            setLoading(false);
+            ticketNumberInput.value = '';
+            ticketNumberInput.focus();
+            return;
+        }
+        
+        if (ticketData.state === 'Used') {
+            showMessage('Ticket already used!', 'error');
+            setLoading(false);
+            ticketNumberInput.value = '';
+            ticketNumberInput.focus();
+            return;
+        }
+        
+        if (ticketData.claim !== 'Unclaimed') {
+            showMessage('Prize already claimed for this ticket!', 'error');
+            setLoading(false);
+            ticketNumberInput.value = '';
+            ticketNumberInput.focus();
             return;
         }
 
@@ -45,10 +100,23 @@ ticketForm.addEventListener('submit', async (e) => {
         });
 
         showMessage('Ticket used successfully!', 'success');
-        ticketForm.reset();
+        ticketNumberInput.value = '';
+        ticketNumberInput.focus();
     } catch (error) {
         showMessage('Error processing ticket: ' + error.message, 'error');
+    } finally {
+        // Hide loading state
+        setLoading(false);
     }
+});
+
+// Add input event listener to format the ticket number as user types
+ticketNumberInput.addEventListener('input', function(e) {
+    // Remove any non-digit characters
+    let value = this.value.replace(/\D/g, '');
+    
+    // Update the input value with the cleaned number
+    this.value = value;
 });
 
 function showMessage(message, type) {

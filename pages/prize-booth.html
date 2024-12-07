@@ -4,24 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prize Booth - Carnival</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/booth.css">
+    <link rel="stylesheet" href="../css/booth-pages.css">
 </head>
 <body>
     <div class="container">
         <div class="booth-container">
-            <h1 class="booth-title">Prize Booth</h1>
-            <form id="ticketForm" class="ticket-form">
-                <div class="input-group">
-                    <label for="ticketNumber">Ticket Number</label>
-                    <input type="text" id="ticketNumber" required pattern="[0-9]+" placeholder="Enter ticket number">
+            <div class="booth-card">
+                <h1 class="booth-title">Prize Booth</h1>
+                <p class="booth-subtitle">Redeem tickets for prizes</p>
+                
+                <form id="ticketForm" class="ticket-form">
+                    <div class="input-group">
+                        <label for="ticketNumber">Ticket Number</label>
+                        <input type="text" id="ticketNumber" required pattern="[0-9]+" placeholder="Enter ticket number">
+                    </div>
+                    <div class="loading-text">Verifying ticket...</div>
+                    <div class="single-button">
+                        <button type="submit" class="action-button">Redeem Ticket</button>
+                    </div>
+                </form>
+
+                <div id="message" class="message"></div>
+                <div class="single-button">
+                    <button id="logoutBtn" class="action-button">Logout</button>
                 </div>
-                <button type="submit" class="action-button">Claim Prize</button>
-            </form>
-            <div id="message" class="message"></div>
-            <button id="logoutBtn" class="action-button" style="margin-top: 1rem;">Logout</button>
+            </div>
         </div>
     </div>
+    
     <script type="module" src="../js/firebase-config.js"></script>
     <script type="module" src="../js/auth-check.js"></script>
     <script type="module" src="../js/prize-booth.js"></script>

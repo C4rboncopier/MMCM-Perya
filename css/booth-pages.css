@@ -1,17 +1,17 @@
 .booth-container {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
     min-height: calc(100vh - 4rem);
     padding: 1rem;
 }
 
-.login-card {
+.booth-card {
     background: var(--light-color);
     padding: 3rem;
     border-radius: 20px;
     width: 100%;
-    max-width: 450px;
+    max-width: 600px;
     box-shadow: 0 15px 30px var(--shadow-color);
     position: relative;
     overflow: hidden;
@@ -19,12 +19,12 @@
     transition: all 0.3s ease;
 }
 
-.login-card:hover {
+.booth-card:hover {
     transform: translateY(-5px);
     border-color: var(--accent-color);
 }
 
-.login-card::before {
+.booth-card::before {
     content: '';
     position: absolute;
     top: 0;
@@ -37,7 +37,7 @@
     transition: transform 0.3s ease;
 }
 
-.login-card:hover::before {
+.booth-card:hover::before {
     transform: scaleX(1);
 }
 
@@ -49,7 +49,7 @@
     font-weight: 700;
 }
 
-.login-subtitle {
+.booth-subtitle {
     color: var(--dark-color);
     opacity: 0.7;
     text-align: center;
@@ -100,9 +100,64 @@
     border-color: var(--primary-color);
 }
 
+.counter-info {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+    color: var(--dark-color);
+    font-weight: 500;
+}
+
+.button-group {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    margin-top: 1.5rem;
+}
+
+.button-group .action-button {
+    flex: 1;
+}
+
+.single-button {
+    width: 100%;
+    margin-top: 1.5rem;
+}
+
+.single-button .action-button {
+    width: 100%;
+}
+
+.cancel-button {
+    background: var(--primary-color) !important;
+    opacity: 0.9;
+}
+
+.cancel-button:hover {
+    background: var(--gradient-end) !important;
+}
+
+.cancel-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.loading-text {
+    text-align: center;
+    color: var(--dark-color);
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    opacity: 0.8;
+    display: none;
+}
+
+.loading-text.visible {
+    display: block;
+}
+
 .message {
     text-align: center;
-    margin-bottom: 1rem;
+    margin: 1rem 0;
     padding: 0.75rem;
     border-radius: 10px;
     font-size: 0.9rem;
@@ -125,7 +180,7 @@
         align-items: stretch;
     }
 
-    .login-card {
+    .booth-card {
         margin: 0;
         padding: 2rem 1.5rem;
         max-width: none;
@@ -141,8 +196,21 @@
         padding: 0.7rem 0.9rem;
     }
 
+    .button-group {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
     .action-button {
         padding: 0.7rem 1rem;
         font-size: 1rem;
+    }
+
+    .counter-info {
+        font-size: 1rem;
+    }
+
+    .loading-text {
+        font-size: 0.85rem;
     }
 } 
