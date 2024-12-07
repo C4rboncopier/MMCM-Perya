@@ -1,0 +1,17 @@
+{
+  "name": "carnival-ticket-system",
+  "version": "1.0.0",
+  "description": "A carnival ticket management system",
+  "main": "index.js",
+  "scripts": {
+    "start": "serve .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["carnival", "tickets", "booth"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "firebase": "^10.8.0",
+    "serve": "^14.2.1"
+  }
+}
