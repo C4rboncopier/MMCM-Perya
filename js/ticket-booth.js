@@ -4,7 +4,7 @@ import { collection, doc, getDoc, setDoc, serverTimestamp, query, orderBy, limit
 
 // Initialize all DOM elements
 let quantityForm, ticketForm, messageDiv, logoutBtn, currentTicketSpan, 
-    totalTicketsSpan, cancelBtn, loadingText, resultsSection, ticketList, backBtn, manualTicketForm;
+    totalTicketsSpan, cancelBtn, loadingText, resultsSection, ticketList, backBtn, manualTicketForm, ferrisWheelBtn;
 
 let currentTicketCount = 1;
 let totalTickets = 0;
@@ -28,10 +28,11 @@ function initializeDOMElements() {
     backBtn = document.getElementById('backBtn');
     manualTicketForm = document.getElementById('manualTicketForm');
     highestTicketSpan = document.getElementById('highestTicket');
+    ferrisWheelBtn = document.getElementById('ferrisWheelBtn');
 
     if (!quantityForm || !ticketForm || !messageDiv || !logoutBtn || 
         !currentTicketSpan || !totalTicketsSpan || !cancelBtn || !loadingText ||
-        !resultsSection || !ticketList || !backBtn || !manualTicketForm || !highestTicketSpan) {
+        !resultsSection || !ticketList || !backBtn || !manualTicketForm || !highestTicketSpan || !ferrisWheelBtn) {
         throw new Error('Required DOM elements not found');
     }
 }
@@ -311,6 +312,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     console.error('Error signing out:', error);
                     showMessage('Error signing out', 'error');
                 }
+            });
+        }
+
+        if (ferrisWheelBtn) {
+            ferrisWheelBtn.addEventListener('click', () => {
+                window.location.href = 'ferris-wheel.html';
             });
         }
 
