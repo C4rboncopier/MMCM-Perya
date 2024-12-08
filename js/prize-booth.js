@@ -1,11 +1,11 @@
 import { db, auth } from './firebase-config.js';
 import { signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-import { doc, getDoc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { doc, getDoc, updateDoc, serverTimestamp, setDoc, collection, query, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 // Initialize DOM elements
 let ticketForm, messageDiv, logoutBtn, loadingText, ticketNumberInput,
     submitButton, finishRedeemBtn, cancelRedeemBtn, ticketsListSection, ticketsList,
-    totalTicketsSpan, totalPointsSpan, ticketStatus;
+    totalTicketsSpan, totalPointsSpan, ticketStatus, convertToSpecialBtn;
 
 // Track redeemed tickets
 let redeemedTickets = [];
@@ -27,9 +27,22 @@ function initializeDOMElements() {
     totalPointsSpan = document.getElementById('totalPoints');
     ticketStatus = document.getElementById('ticketStatus');
     
+    // Create convert to special button dynamically
+    convertToSpecialBtn = document.createElement('button');
+    convertToSpecialBtn.id = 'convertToSpecialBtn';
+    convertToSpecialBtn.textContent = 'Convert to Special Ticket';
+    convertToSpecialBtn.className = 'action-button';
+    convertToSpecialBtn.style.display = 'none';
+    convertToSpecialBtn.style.marginBottom = '10px';
+    // Insert the button before the finish button
+    if (finishRedeemBtn) {
+        finishRedeemBtn.parentNode.insertBefore(convertToSpecialBtn, finishRedeemBtn);
+    }
+    
     if (!ticketForm || !messageDiv || !logoutBtn || !loadingText || 
         !ticketNumberInput || !submitButton || !finishRedeemBtn || !cancelRedeemBtn ||
-        !ticketsListSection || !ticketsList || !totalTicketsSpan || !totalPointsSpan || !ticketStatus) {
+        !ticketsListSection || !ticketsList || !totalTicketsSpan || !totalPointsSpan || 
+        !ticketStatus) {
         throw new Error('Required DOM elements not found');
     }
 }
@@ -54,10 +67,13 @@ function setLoading(isLoading) {
 
 // Function to update summary
 function updateSummary() {
-    if (!totalTicketsSpan || !totalPointsSpan) return;
+    if (!totalTicketsSpan || !totalPointsSpan || !convertToSpecialBtn) return;
     
     totalTicketsSpan.textContent = redeemedTickets.length;
     totalPointsSpan.textContent = totalPoints;
+
+    // Show/hide convert to special ticket button based on points
+    convertToSpecialBtn.style.display = totalPoints >= 500 ? 'block' : 'none';
 }
 
 // Function to update tickets list
@@ -71,21 +87,20 @@ function updateTicketsList() {
         
         // Create text content
         const ticketText = document.createElement('span');
-        ticketText.textContent = `Ticket: ${ticket.number} (Points: ${ticket.points})`;
+        ticketText.textContent = `${ticket.isSpecial ? 'Special ' : ''}Ticket: ${ticket.number} (Points: ${ticket.points})`;
         
         // Create remove button
         const removeBtn = document.createElement('button');
         removeBtn.className = 'remove-btn';
         removeBtn.textContent = 'Remove';
         removeBtn.onclick = () => {
-            // Just remove from local array since we haven't claimed it in Firebase yet
             redeemedTickets = redeemedTickets.filter(t => t.number !== ticket.number);
             totalPoints -= ticket.points;
 
             // Update UI
             updateSummary();
             updateTicketsList();
-            showMessage(`Ticket ${ticket.number} removed successfully!`, 'success');
+            showMessage(`${ticket.isSpecial ? 'Special ' : ''}Ticket ${ticket.number} removed successfully!`, 'success');
         };
 
         // Add elements to ticket item
@@ -93,6 +108,80 @@ function updateTicketsList() {
         ticketItem.appendChild(removeBtn);
         ticketsList.appendChild(ticketItem);
     });
+}
+
+// Function to get next special ticket number
+async function getNextSpecialTicketNumber() {
+    try {
+        // Query the specialTickets collection for the latest ticket
+        const specialTicketsRef = collection(db, 'specialTickets');
+        const q = query(specialTicketsRef, orderBy('ticketNumber', 'desc'), limit(1));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            // If no special tickets exist, start from 90001
+            return '90001';
+        }
+
+        // Get the latest ticket number and increment it
+        const latestTicket = querySnapshot.docs[0];
+        const latestNumber = parseInt(latestTicket.id);
+        return (latestNumber + 1).toString();
+    } catch (error) {
+        console.error('Error getting next ticket number:', error);
+        throw error;
+    }
+}
+
+// Function to convert to special ticket
+async function convertToSpecialTicket() {
+    if (totalPoints < 500) {
+        showMessage('Need at least 500 points to create a special ticket', 'error');
+        return;
+    }
+
+    // Clear any existing ticket status
+    clearTicketStatus();
+    setLoading(true);
+
+    try {
+        // Get the next special ticket number
+        const specialTicketNumber = await getNextSpecialTicketNumber();
+        
+        // Create the special ticket document
+        await setDoc(doc(db, 'specialTickets', specialTicketNumber), {
+            ticketNumber: specialTicketNumber,
+            points: totalPoints,
+            createdAt: serverTimestamp(),
+            tickets: redeemedTickets.map(t => t.number)
+        });
+
+        // Mark original tickets as claimed
+        for (const ticket of redeemedTickets) {
+            await updateDoc(ticket.ref, {
+                claim: 'Claimed',
+                claimedAt: serverTimestamp(),
+                convertedToSpecial: specialTicketNumber
+            });
+        }
+
+        showTicketStatus(`Successfully created special ticket: ${specialTicketNumber}`, 'success');
+
+        // Reset everything
+        redeemedTickets = [];
+        totalPoints = 0;
+        updateSummary();
+        updateTicketsList();
+        
+        if (ticketNumberInput) {
+            ticketNumberInput.value = '';
+            ticketNumberInput.focus();
+        }
+    } catch (error) {
+        showTicketStatus('Error creating special ticket: ' + error.message, 'error');
+    } finally {
+        setLoading(false);
+    }
 }
 
 // Function to finish redeeming process
@@ -176,65 +265,102 @@ async function handleTicketSubmission(e) {
     // Show loading state
     setLoading(true);
 
-    // Pad the ticket number to 5 digits
-    ticketNumber = padTicketNumber(ticketNumber);
-
     try {
-        const ticketRef = doc(db, 'tickets', ticketNumber);
-        const ticketSnap = await getDoc(ticketRef);
+        // Check if it's a special ticket (starts with 9 and is 5 digits)
+        const isSpecialTicket = ticketNumber.startsWith('9') && ticketNumber.length === 5;
+        let ticketRef;
+        let ticketSnap;
 
-        if (!ticketSnap.exists()) {
-            showTicketStatus('Ticket not found!', 'error');
-            setLoading(false);
-            ticketNumberInput.value = '';
-            ticketNumberInput.focus();
-            return;
-        }
+        if (isSpecialTicket) {
+            ticketRef = doc(db, 'specialTickets', ticketNumber);
+            ticketSnap = await getDoc(ticketRef);
+            
+            if (!ticketSnap.exists()) {
+                showTicketStatus('Special ticket not found!', 'error');
+                setLoading(false);
+                ticketNumberInput.value = '';
+                ticketNumberInput.focus();
+                return;
+            }
 
-        const ticketData = ticketSnap.data();
-        
-        // Check if ticket is already claimed
-        if (ticketData.claim === 'Claimed') {
-            showTicketStatus('This ticket has already been claimed!', 'error');
-            setLoading(false);
-            ticketNumberInput.value = '';
-            ticketNumberInput.focus();
-            return;
-        }
+            const ticketData = ticketSnap.data();
+            
+            // Check if special ticket is already claimed
+            if (ticketData.claim === 'Claimed') {
+                showTicketStatus('This special ticket has already been claimed!', 'error');
+                setLoading(false);
+                ticketNumberInput.value = '';
+                ticketNumberInput.focus();
+                return;
+            }
 
-        // Check specific ticket states
-        if (ticketData.status !== 'Released') {
-            showTicketStatus('Invalid ticket!', 'error');
-            setLoading(false);
-            ticketNumberInput.value = '';
-            ticketNumberInput.focus();
-            return;
-        }
-        
-        if (ticketData.state !== 'Used') {
-            showTicketStatus('Ticket has not been used in a game yet!', 'warning');
-            setLoading(false);
-            ticketNumberInput.value = '';
-            ticketNumberInput.focus();
-            return;
-        }
+            // Add special ticket to list
+            redeemedTickets.push({
+                number: ticketNumber,
+                points: ticketData.points || 0,
+                ref: ticketRef,
+                isSpecial: true
+            });
+            totalPoints += ticketData.points || 0;
+        } else {
+            // Pad the regular ticket number to 5 digits
+            ticketNumber = padTicketNumber(ticketNumber);
+            ticketRef = doc(db, 'tickets', ticketNumber);
+            ticketSnap = await getDoc(ticketRef);
 
-        // Check if ticket is already in our list
-        if (redeemedTickets.some(t => t.number === ticketNumber)) {
-            showTicketStatus('This ticket has already been added!', 'error');
-            setLoading(false);
-            ticketNumberInput.value = '';
-            ticketNumberInput.focus();
-            return;
-        }
+            if (!ticketSnap.exists()) {
+                showTicketStatus('Ticket not found!', 'error');
+                setLoading(false);
+                ticketNumberInput.value = '';
+                ticketNumberInput.focus();
+                return;
+            }
 
-        // Add ticket to our list without marking it as claimed yet
-        redeemedTickets.push({
-            number: ticketNumber,
-            points: ticketData.points || 0,
-            ref: ticketRef
-        });
-        totalPoints += ticketData.points || 0;
+            const ticketData = ticketSnap.data();
+            
+            // Check if regular ticket is already claimed
+            if (ticketData.claim === 'Claimed') {
+                showTicketStatus('This ticket has already been claimed!', 'error');
+                setLoading(false);
+                ticketNumberInput.value = '';
+                ticketNumberInput.focus();
+                return;
+            }
+
+            // Check specific ticket states
+            if (ticketData.status !== 'Released') {
+                showTicketStatus('Invalid ticket!', 'error');
+                setLoading(false);
+                ticketNumberInput.value = '';
+                ticketNumberInput.focus();
+                return;
+            }
+            
+            if (ticketData.state !== 'Used') {
+                showTicketStatus('Ticket has not been used in a game yet!', 'warning');
+                setLoading(false);
+                ticketNumberInput.value = '';
+                ticketNumberInput.focus();
+                return;
+            }
+
+            // Check if ticket is already in our list
+            if (redeemedTickets.some(t => t.number === ticketNumber)) {
+                showTicketStatus('This ticket has already been added!', 'error');
+                setLoading(false);
+                ticketNumberInput.value = '';
+                ticketNumberInput.focus();
+                return;
+            }
+
+            // Add regular ticket to list
+            redeemedTickets.push({
+                number: ticketNumber,
+                points: ticketData.points || 0,
+                ref: ticketRef
+            });
+            totalPoints += ticketData.points || 0;
+        }
 
         // Update UI
         updateSummary();
@@ -286,6 +412,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add finish redeem button handler
         if (finishRedeemBtn) {
             finishRedeemBtn.addEventListener('click', finishRedeeming);
+        }
+
+        // Add convert to special ticket button handler
+        if (convertToSpecialBtn) {
+            convertToSpecialBtn.addEventListener('click', convertToSpecialTicket);
         }
 
         // Add form submission handler
