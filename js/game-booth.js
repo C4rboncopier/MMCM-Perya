@@ -16,9 +16,9 @@ async function fetchBoothData() {
 
         if (boothSnap.exists()) {
             const boothData = boothSnap.data();
-            // Update title with username
+            // Update title with boothName instead of username
             if (boothTitle) {
-                boothTitle.textContent = boothData.username;
+                boothTitle.textContent = boothData.boothName || boothData.username; // Fallback to username if boothName doesn't exist
             }
             // Update total tickets if element exists
             if (totalTicketsSpan) {

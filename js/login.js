@@ -75,6 +75,7 @@ loginForm.addEventListener('submit', async (e) => {
                     await setDoc(boothRef, {
                         username: username,
                         email: email,
+                        boothName: username.charAt(0).toUpperCase() + username.slice(1),
                         totalTickets: 0,
                         createdAt: serverTimestamp(),
                         lastUpdated: serverTimestamp()
