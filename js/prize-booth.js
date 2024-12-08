@@ -1,6 +1,6 @@
 import { db, auth } from './firebase-config.js';
 import { signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-import { doc, getDoc, updateDoc, serverTimestamp, setDoc, collection, query, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { doc, getDoc, updateDoc, serverTimestamp, setDoc, collection, query, orderBy, limit, getDocs, runTransaction } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 // Initialize DOM elements
 let ticketForm, messageDiv, logoutBtn, loadingText, ticketNumberInput,
@@ -112,23 +112,22 @@ function updateTicketsList() {
 
 // Function to get next special ticket number
 async function getNextSpecialTicketNumber() {
+    const counterRef = doc(db, 'system', 'specialTicketCounter');
+    
     try {
-        // Query the specialTickets collection for the latest ticket
-        const specialTicketsRef = collection(db, 'specialTickets');
-        const q = query(specialTicketsRef, orderBy('ticketNumber', 'desc'), limit(1));
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) {
-            // If no special tickets exist, start from 90001
-            return '90001';
-        }
-
-        // Get the latest ticket number and increment it
-        const latestTicket = querySnapshot.docs[0];
-        const latestNumber = parseInt(latestTicket.id);
-        return (latestNumber + 1).toString();
+        const result = await runTransaction(db, async (transaction) => {
+            const counterDoc = await transaction.get(counterRef);
+            const currentCounter = counterDoc.exists() ? counterDoc.data().currentNumber : 90000;
+            const nextCounter = currentCounter + 1;
+            
+            transaction.set(counterRef, { currentNumber: nextCounter });
+            
+            return nextCounter.toString();
+        });
+        
+        return result;
     } catch (error) {
-        console.error('Error getting next ticket number:', error);
+        console.error('Error getting next special ticket number:', error);
         throw error;
     }
 }

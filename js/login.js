@@ -41,7 +41,7 @@ initializeAuth();
 
 loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const username = document.getElementById('username').value;
+    const username = document.getElementById('username').value.toLowerCase();
     const password = document.getElementById('password').value;
 
     try {
@@ -100,4 +100,10 @@ function showMessage(message, type) {
         messageDiv.textContent = '';
         messageDiv.className = 'message';
     }, 3000);
-} 
+}
+
+// Convert username to lowercase as user types
+const usernameInput = document.getElementById('username');
+usernameInput.addEventListener('input', function(e) {
+    this.value = this.value.toLowerCase();
+}); 
