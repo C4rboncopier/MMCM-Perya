@@ -149,6 +149,9 @@ body {
 }
 
 @media (max-width: 768px) {
+    body{
+        padding: 0.8rem 0;
+    }
     .main-title {
         font-size: 2rem;
     }

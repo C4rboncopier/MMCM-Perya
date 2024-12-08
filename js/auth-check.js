@@ -1,4 +1,4 @@
-import { auth } from './firebase-config.js';
+import { auth, initializeFirebase } from './firebase-config.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 
 // Function to redirect to login
@@ -10,7 +10,7 @@ function redirectToLogin() {
 }
 
 // Function to check booth access
-function checkBoothAccess(user) {
+async function checkBoothAccess(user) {
     // Skip all checks if we're on the login page
     if (window.location.pathname.includes('login.html')) {
         return;
@@ -26,6 +26,17 @@ function checkBoothAccess(user) {
     if (!boothType) {
         auth.signOut().then(() => {
             localStorage.removeItem('boothType');
+            localStorage.removeItem('gameName');
+            redirectToLogin();
+        });
+        return;
+    }
+
+    // For game booth, check if game name exists
+    if (boothType === 'game-booth' && !localStorage.getItem('gameName')) {
+        auth.signOut().then(() => {
+            localStorage.removeItem('boothType');
+            localStorage.removeItem('gameName');
             redirectToLogin();
         });
         return;
@@ -45,7 +56,15 @@ function checkBoothAccess(user) {
     }
 }
 
-// Wait for auth state to be ready before checking
-onAuthStateChanged(auth, (user) => {
-    checkBoothAccess(user);
-}); 
+// Initialize Firebase and set up auth state listener
+async function initializeAuth() {
+    const { auth } = await initializeFirebase();
+    
+    // Wait for auth state to be ready before checking
+    onAuthStateChanged(auth, (user) => {
+        checkBoothAccess(user);
+    });
+}
+
+// Initialize authentication
+initializeAuth(); 

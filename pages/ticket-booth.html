@@ -17,6 +17,7 @@
                 <img src="/images/hudyaka_logo.png" alt="Hudyaka Logo" class="logo">
                 <h1 class="booth-title">Ticket Booth</h1>
                 <p class="booth-subtitle">Manage ticket distribution</p>
+                <p class="ticket-info">Highest Ticket Number: <span id="highestTicket">Loading...</span></p>
                 
                 <!-- Ticket Quantity Form -->
                 <form id="quantityForm" class="ticket-form">
@@ -29,21 +30,36 @@
                     </div>
                 </form>
 
+                <!-- Manual Ticket Form -->
+                <form id="manualTicketForm" class="ticket-form">
+                    <div class="input-group">
+                        <label for="manualTicketNumber">Add Single Ticket</label>
+                        <input type="text" id="manualTicketNumber" required pattern="[0-9]+" placeholder="Enter ticket number">
+                    </div>
+                    <div class="single-button">
+                        <button type="submit" class="action-button">Add Ticket</button>
+                    </div>
+                </form>
+
                 <!-- Ticket Number Form (Initially Hidden) -->
                 <form id="ticketForm" class="ticket-form" style="display: none;">
                     <div class="counter-info">
-                        <p>Ticket <span id="currentTicket">1</span> of <span id="totalTickets">0</span></p>
+                        <p>Releasing ticket <span id="currentTicket">1</span> of <span id="totalTickets">0</span></p>
                     </div>
-                    <div class="input-group">
-                        <label for="ticketNumber">Ticket Number</label>
-                        <input type="text" id="ticketNumber" required pattern="[0-9]+" placeholder="Enter ticket number">
-                    </div>
-                    <div class="loading-text">Processing ticket number...</div>
+                    <div class="loading-text">Processing tickets...</div>
                     <div class="button-group">
-                        <button type="submit" class="action-button">Release Ticket</button>
                         <button type="button" id="cancelBtn" class="action-button cancel-button">Cancel</button>
                     </div>
                 </form>
+
+                <!-- Results Section (Initially Hidden) -->
+                <div id="resultsSection" class="ticket-form" style="display: none;">
+                    <h2>Generated Tickets</h2>
+                    <div id="ticketList" class="ticket-list"></div>
+                    <div class="single-button">
+                        <button id="backBtn" class="action-button">Generate More Tickets</button>
+                    </div>
+                </div>
 
                 <div id="message" class="message"></div>
                 <div class="single-button">

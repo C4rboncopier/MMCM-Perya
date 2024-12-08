@@ -13,27 +13,56 @@
 <body>
     <div class="container">
         <div class="booth-container">
-            <div class="booth-card">
-                <img src="/images/hudyaka_logo.png" alt="Hudyaka Logo" class="logo">
-                <h1 class="booth-title">Prize Booth</h1>
-                <p class="booth-subtitle">Redeem tickets for prizes</p>
-                
-                <form id="ticketForm" class="ticket-form">
-                    <div class="input-group">
-                        <label for="ticketNumber">Ticket Number</label>
-                        <input type="text" id="ticketNumber" required pattern="[0-9]+" placeholder="Enter ticket number">
-                    </div>
-                    <div class="loading-text">Verifying ticket...</div>
-                    <div class="single-button">
-                        <button type="submit" class="action-button">Redeem Ticket</button>
-                    </div>
-                </form>
+            <!-- Two Column Layout -->
+            <div id="redeemSection" class="booth-grid">
+                <!-- Left Column -->
+                <div class="booth-column left-column">
+                    <div class="booth-card">
+                        <img src="/images/hudyaka_logo.png" alt="Hudyaka Logo" class="logo">
+                        <h1 class="booth-title">Prize Booth</h1>
+                        <p class="booth-subtitle">Redeem tickets for prizes</p>
+                        
+                        <div class="points-summary">
+                            <p>Total Tickets: <span id="totalTickets">0</span></p>
+                            <p>Total Points: <span id="totalPoints">0</span></p>
+                        </div>
 
-                <div id="message" class="message"></div>
-                <div class="single-button">
-                    <button id="logoutBtn" class="action-button">Logout</button>
+                        <form id="ticketForm" class="ticket-form">
+                            <div class="input-group">
+                                <label for="ticketNumber">Ticket Number</label>
+                                <input type="text" id="ticketNumber" required pattern="[0-9]+" placeholder="Enter ticket number">
+                            </div>
+                            <div class="loading-text">Verifying ticket...</div>
+                            <div class="button-container">
+                                <div class="button-group">
+                                    <button type="submit" class="action-button">Add Ticket</button>
+                                    <button type="button" id="cancelRedeemBtn" class="action-button cancel-button">Cancel All</button>
+                                </div>
+                                <div class="ticket-status" id="ticketStatus"></div>
+                                <div class="single-button">
+                                    <button type="button" id="finishRedeemBtn" class="action-button finish-button">Finish Redeeming</button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <div class="single-button logout-button">
+                            <button id="logoutBtn" class="action-button">Logout</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="booth-column right-column">
+                    <div class="booth-card">
+                        <div id="ticketsListSection" class="ticket-list-container">
+                            <h2>Added Tickets</h2>
+                            <div id="ticketsList" class="ticket-list"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            <div id="message" class="message"></div>
         </div>
     </div>
     
