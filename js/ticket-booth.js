@@ -1,6 +1,6 @@
 import { db, auth, initializeFirebase } from './firebase-config.js';
 import { signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-import { collection, doc, getDoc, setDoc, serverTimestamp, query, orderBy, limit, getDocs, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { collection, doc, getDoc, setDoc, serverTimestamp, query, orderBy, limit, getDocs, onSnapshot, runTransaction } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 // Initialize all DOM elements
 let quantityForm, ticketForm, messageDiv, logoutBtn, currentTicketSpan, 
@@ -136,54 +136,76 @@ export async function getHighestTicketNumber() {
     }
 }
 
+// Function to get next ticket number atomically
+async function getNextTicketNumber(quantity) {
+    const counterRef = doc(db, 'system', 'ticketCounter');
+    
+    try {
+        const result = await runTransaction(db, async (transaction) => {
+            const counterDoc = await transaction.get(counterRef);
+            const currentCounter = counterDoc.exists() ? counterDoc.data().currentNumber : 0;
+            const nextCounter = currentCounter + quantity;
+            
+            transaction.set(counterRef, { currentNumber: nextCounter });
+            
+            return currentCounter;
+        });
+        
+        return result;
+    } catch (error) {
+        console.error('Transaction failed:', error);
+        throw error;
+    }
+}
+
 // Function to release tickets automatically
-async function releaseTickets(startNumber, quantity) {
+async function releaseTickets(quantity) {
     generatedTickets = []; // Reset generated tickets array
     
-    for (let i = 0; i < quantity; i++) {
-        const ticketNumber = padTicketNumber(startNumber + i + 1);
+    try {
+        const startNumber = await getNextTicketNumber(quantity);
         
-        try {
-            const ticketRef = doc(db, 'tickets', ticketNumber);
-            const ticketSnap = await getDoc(ticketRef);
-
-            if (ticketSnap.exists()) {
-                showMessage(`Ticket number ${ticketNumber} already exists! Skipping...`, 'error');
-                continue;
-            }
-
-            await setDoc(ticketRef, {
-                status: 'Released',
-                state: 'Unused',
-                claim: 'Unclaimed',
-                points: 0, // Initialize points to 0
-                createdAt: serverTimestamp(),
-                ticketNumber: ticketNumber
-            });
-
-            hasReleasedTickets = true;
-            if (cancelBtn) cancelBtn.disabled = true;
-
-            // Add to generated tickets array
-            generatedTickets.push(ticketNumber);
-
-            showMessage(`Ticket ${ticketNumber} released successfully!`, 'success');
+        for (let i = 0; i < quantity; i++) {
+            const ticketNumber = padTicketNumber(startNumber + i + 1);
             
-            if (currentTicketSpan) {
-                currentTicketCount = i + 1; // Update to current count (1-based)
-                currentTicketSpan.textContent = currentTicketCount;
+            try {
+                const ticketRef = doc(db, 'tickets', ticketNumber);
+                await setDoc(ticketRef, {
+                    status: 'Released',
+                    state: 'Unused',
+                    claim: 'Unclaimed',
+                    points: 0,
+                    createdAt: serverTimestamp(),
+                    ticketNumber: ticketNumber
+                });
+
+                hasReleasedTickets = true;
+                if (cancelBtn) cancelBtn.disabled = true;
+
+                // Add to generated tickets array
+                generatedTickets.push(ticketNumber);
+
+                showMessage(`Ticket ${ticketNumber} released successfully!`, 'success');
+                
+                if (currentTicketSpan) {
+                    currentTicketCount = i + 1; // Update to current count (1-based)
+                    currentTicketSpan.textContent = currentTicketCount;
+                }
+
+                // Small delay to prevent overwhelming the database
+                await new Promise(resolve => setTimeout(resolve, 500));
+            } catch (error) {
+                showMessage(`Error releasing ticket ${ticketNumber}: ${error.message}`, 'error');
             }
-
-            // Small delay to prevent overwhelming the database
-            await new Promise(resolve => setTimeout(resolve, 500));
-        } catch (error) {
-            showMessage(`Error releasing ticket ${ticketNumber}: ${error.message}`, 'error');
         }
+        
+        // Show results instead of resetting
+        showResults();
+        showMessage('All tickets have been released successfully!', 'success');
+    } catch (error) {
+        showMessage('Error generating tickets: ' + error.message, 'error');
+        throw error;
     }
-
-    // Show results instead of resetting
-    showResults();
-    showMessage('All tickets have been released successfully!', 'success');
 }
 
 // Function to setup real-time listener for highest ticket
@@ -320,8 +342,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 setLoading(true);
 
                 try {
-                    const highestTicket = await getHighestTicketNumber();
-                    
                     currentTicketCount = 1;
                     totalTickets = quantity;
                     if (totalTicketsSpan) totalTicketsSpan.textContent = quantity;
@@ -333,7 +353,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (quantityForm) quantityForm.style.display = 'none';
                     if (ticketForm) ticketForm.style.display = 'block';
 
-                    await releaseTickets(highestTicket, quantity);
+                    await releaseTickets(quantity);
                 } catch (error) {
                     showMessage('Error: ' + error.message, 'error');
                     resetToQuantityForm();

@@ -114,8 +114,6 @@ async function finishRedeeming() {
             });
         }
 
-        showMessage(`Redemption complete! Total Points: ${totalPoints}`, 'success');
-        
         // Reset everything
         redeemedTickets = [];
         totalPoints = 0;
@@ -241,7 +239,6 @@ async function handleTicketSubmission(e) {
         // Update UI
         updateSummary();
         updateTicketsList();
-        showMessage('Ticket added successfully!', 'success');
         showTicketStatus('Ticket added successfully!', 'success');
         
         ticketNumberInput.value = '';
