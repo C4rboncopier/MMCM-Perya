@@ -39,10 +39,30 @@ async function initializeAuth() {
 // Initialize authentication
 initializeAuth();
 
+// Add to the top with other DOM elements
+const loginButton = loginForm.querySelector('button[type="submit"]');
+const buttonText = loginButton.querySelector('.button-text');
+const loadingSpinner = loginButton.querySelector('.loading-spinner');
+
+function setLoading(isLoading) {
+    if (isLoading) {
+        loginButton.disabled = true;
+        buttonText.style.opacity = '0.7';
+        loadingSpinner.style.display = 'inline-block';
+    } else {
+        loginButton.disabled = false;
+        buttonText.style.opacity = '1';
+        loadingSpinner.style.display = 'none';
+    }
+}
+
 loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('username').value.toLowerCase();
     const password = document.getElementById('password').value;
+
+    // Show loading state
+    setLoading(true);
 
     try {
         // Check if it's a fixed booth type
@@ -89,6 +109,8 @@ loginForm.addEventListener('submit', async (e) => {
         }
 
     } catch (error) {
+        // Hide loading state and show error
+        setLoading(false);
         showMessage('Invalid username or password', 'error');
         console.error(error);
     }
