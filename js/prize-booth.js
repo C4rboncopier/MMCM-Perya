@@ -232,12 +232,24 @@ function resetRedemption() {
     }
 }
 
-// Function to show ticket status
-function showTicketStatus(message, type) {
+// Function to show message
+function showMessage(message, type) {
     if (!ticketStatus) return;
     
+    // Use the existing ticket-status div
     ticketStatus.textContent = message;
     ticketStatus.className = `ticket-status ${type}`;
+
+    // Auto clear after 5 seconds
+    setTimeout(() => {
+        ticketStatus.textContent = '';
+        ticketStatus.className = 'ticket-status';
+    }, 5000);
+}
+
+// Function to show ticket status (now just uses the same function)
+function showTicketStatus(message, type) {
+    showMessage(message, type);
 }
 
 // Function to clear ticket status
@@ -436,15 +448,4 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Error initializing prize booth:', error);
         showMessage('Error initializing the application', 'error');
     }
-});
-
-function showMessage(message, type) {
-    if (!messageDiv) return;
-    
-    messageDiv.textContent = message;
-    messageDiv.className = `message ${type}`;
-    setTimeout(() => {
-        messageDiv.textContent = '';
-        messageDiv.className = 'message';
-    }, 3000);
-} 
+}); 

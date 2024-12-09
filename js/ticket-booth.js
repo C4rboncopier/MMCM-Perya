@@ -1,10 +1,10 @@
 import { db, auth, initializeFirebase } from './firebase-config.js';
 import { signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-import { collection, doc, getDoc, setDoc, serverTimestamp, query, orderBy, limit, getDocs, onSnapshot, runTransaction } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { collection, doc, getDoc, setDoc, serverTimestamp, query, orderBy, limit, getDocs, onSnapshot, runTransaction, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 // Initialize all DOM elements
 let quantityForm, ticketForm, messageDiv, logoutBtn, currentTicketSpan, 
-    totalTicketsSpan, cancelBtn, loadingText, resultsSection, ticketList, backBtn, manualTicketForm, ferrisWheelBtn;
+    totalTicketsSpan, cancelBtn, loadingText, resultsSection, ticketList, backBtn, manualTicketForm, countTicketsBtn;
 
 let currentTicketCount = 1;
 let totalTickets = 0;
@@ -12,6 +12,7 @@ let hasReleasedTickets = false;
 let generatedTickets = [];
 let highestTicketSpan;
 let initializedDb;
+let boothName = '';
 
 // Function to initialize DOM elements
 function initializeDOMElements() {
@@ -28,13 +29,17 @@ function initializeDOMElements() {
     backBtn = document.getElementById('backBtn');
     manualTicketForm = document.getElementById('manualTicketForm');
     highestTicketSpan = document.getElementById('highestTicket');
-    ferrisWheelBtn = document.getElementById('ferrisWheelBtn');
+    countTicketsBtn = document.getElementById('countTicketsBtn');
 
     if (!quantityForm || !ticketForm || !messageDiv || !logoutBtn || 
         !currentTicketSpan || !totalTicketsSpan || !cancelBtn || !loadingText ||
-        !resultsSection || !ticketList || !backBtn || !manualTicketForm || !highestTicketSpan || !ferrisWheelBtn) {
+        !resultsSection || !ticketList || !backBtn || !manualTicketForm || !highestTicketSpan ||
+        !countTicketsBtn) {
         throw new Error('Required DOM elements not found');
     }
+
+    // Get booth name from localStorage
+    boothName = localStorage.getItem('boothName') || '';
 }
 
 // Function to pad ticket number to 5 digits
@@ -88,7 +93,35 @@ function showResults() {
     generatedTickets.forEach(ticket => {
         const ticketItem = document.createElement('div');
         ticketItem.className = 'ticket-item';
-        ticketItem.textContent = `Ticket Number: ${ticket} (Points: 0)`;
+        
+        // Create ticket text
+        const ticketText = document.createElement('span');
+        ticketText.textContent = `Ticket Number: ${ticket} (Points: None)`;
+        
+        // Create delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.onclick = async () => {
+            try {
+                const ticketRef = doc(db, 'tickets', ticket);
+                await deleteDoc(ticketRef);
+                
+                // Remove from generated tickets array
+                generatedTickets = generatedTickets.filter(t => t !== ticket);
+                
+                // Remove from display
+                ticketItem.remove();
+                
+                showMessage(`Ticket ${ticket} deleted successfully!`, 'success');
+            } catch (error) {
+                showMessage(`Error deleting ticket ${ticket}: ${error.message}`, 'error');
+            }
+        };
+        
+        // Add elements to ticket item
+        ticketItem.appendChild(ticketText);
+        ticketItem.appendChild(deleteBtn);
         ticketList.appendChild(ticketItem);
     });
 
@@ -139,22 +172,22 @@ export async function getHighestTicketNumber() {
 
 // Function to get next ticket number atomically
 async function getNextTicketNumber(quantity) {
-    const counterRef = doc(db, 'system', 'ticketCounter');
+    const ticketCounterRef = doc(db, 'system', 'ticketCounter');
     
     try {
         const result = await runTransaction(db, async (transaction) => {
-            const counterDoc = await transaction.get(counterRef);
+            const counterDoc = await transaction.get(ticketCounterRef);
             const currentCounter = counterDoc.exists() ? counterDoc.data().currentNumber : 0;
             const nextCounter = currentCounter + quantity;
             
-            transaction.set(counterRef, { currentNumber: nextCounter });
+            transaction.set(ticketCounterRef, { currentNumber: nextCounter });
             
             return currentCounter;
         });
         
         return result;
     } catch (error) {
-        console.error('Transaction failed:', error);
+        console.error('Error getting next ticket number:', error);
         throw error;
     }
 }
@@ -175,7 +208,8 @@ async function releaseTickets(quantity) {
                     status: 'Released',
                     state: 'Unused',
                     claim: 'Unclaimed',
-                    points: 0,
+                    points: 'None',
+                    booth: boothName,
                     createdAt: serverTimestamp(),
                     ticketNumber: ticketNumber
                 });
@@ -209,39 +243,42 @@ async function releaseTickets(quantity) {
     }
 }
 
-// Function to setup real-time listener for highest ticket
+// Function to setup highest ticket listener
 function setupHighestTicketListener() {
-    const ticketsRef = collection(initializedDb, 'tickets');
-    const q = query(ticketsRef, orderBy('ticketNumber', 'desc'), limit(1));
+    if (!highestTicketSpan) return;
+
+    const ticketCounterRef = doc(db, 'system', 'ticketCounter');
     
-    return onSnapshot(q, (snapshot) => {
-        if (!snapshot.empty && highestTicketSpan) {
-            const highestTicket = snapshot.docs[0].data().ticketNumber;
-            const highestNumber = parseInt(highestTicket.replace(/^0+/, ''));
-            highestTicketSpan.textContent = padTicketNumber(highestNumber);
-        } else if (highestTicketSpan) {
+    return onSnapshot(ticketCounterRef, (snapshot) => {
+        if (snapshot.exists()) {
+            const currentNumber = snapshot.data().currentNumber;
+            highestTicketSpan.textContent = padTicketNumber(currentNumber);
+        } else {
             highestTicketSpan.textContent = '00000';
         }
     }, (error) => {
-        console.error('Error listening to highest ticket:', error);
-        if (highestTicketSpan) {
-            highestTicketSpan.textContent = 'Error loading';
-        }
+        console.error('Error getting highest ticket:', error);
+        highestTicketSpan.textContent = 'Error';
     });
 }
 
 // Function to update highest ticket display
 async function updateHighestTicketDisplay() {
+    if (!highestTicketSpan) return;
+    
     try {
-        const highestTicket = await getHighestTicketNumber();
-        if (highestTicketSpan) {
-            highestTicketSpan.textContent = highestTicket ? padTicketNumber(highestTicket) : '00000';
+        const ticketCounterRef = doc(db, 'system', 'ticketCounter');
+        const counterDoc = await getDoc(ticketCounterRef);
+        
+        if (counterDoc.exists()) {
+            const currentNumber = counterDoc.data().currentNumber;
+            highestTicketSpan.textContent = padTicketNumber(currentNumber);
+        } else {
+            highestTicketSpan.textContent = '00000';
         }
     } catch (error) {
-        console.error('Error updating highest ticket:', error);
-        if (highestTicketSpan) {
-            highestTicketSpan.textContent = 'Error loading';
-        }
+        console.error('Error updating highest ticket display:', error);
+        highestTicketSpan.textContent = 'Error';
     }
 }
 
@@ -272,7 +309,8 @@ async function handleManualTicketSubmission(e) {
             status: 'Released',
             state: 'Unused',
             claim: 'Unclaimed',
-            points: 0,
+            points: 'None',
+            booth: boothName,
             createdAt: serverTimestamp(),
             ticketNumber: ticketNumber
         });
@@ -283,6 +321,53 @@ async function handleManualTicketSubmission(e) {
         await updateHighestTicketDisplay();
     } catch (error) {
         showMessage(`Error adding ticket ${ticketNumber}: ${error.message}`, 'error');
+    }
+}
+
+// Add new function to count tickets
+async function countTotalTickets() {
+    try {
+        const ticketsRef = collection(db, 'tickets');
+        const snapshot = await getDocs(ticketsRef);
+        const totalTickets = snapshot.size;
+
+        // Create popup container
+        const popupContainer = document.createElement('div');
+        popupContainer.className = 'popup-container';
+        
+        // Create popup content
+        const popup = document.createElement('div');
+        popup.className = 'popup';
+        
+        // Add title
+        const title = document.createElement('h2');
+        title.textContent = 'Total Tickets Count';
+        title.className = 'popup-title';
+        
+        // Add count
+        const count = document.createElement('p');
+        count.textContent = `Total number of tickets: ${totalTickets}`;
+        count.className = 'popup-count';
+        
+        // Add close button
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'Close';
+        closeBtn.className = 'action-button';
+        closeBtn.onclick = () => {
+            document.body.removeChild(popupContainer);
+        };
+        
+        // Assemble popup
+        popup.appendChild(title);
+        popup.appendChild(count);
+        popup.appendChild(closeBtn);
+        popupContainer.appendChild(popup);
+        
+        // Add to body
+        document.body.appendChild(popupContainer);
+        
+    } catch (error) {
+        showMessage('Error counting tickets: ' + error.message, 'error');
     }
 }
 
@@ -307,17 +392,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     unsubscribe();
                     await signOut(auth);
                     localStorage.removeItem('boothType');
+                    localStorage.removeItem('boothName');
                     window.location.href = '../pages/login.html';
                 } catch (error) {
                     console.error('Error signing out:', error);
                     showMessage('Error signing out', 'error');
                 }
-            });
-        }
-
-        if (ferrisWheelBtn) {
-            ferrisWheelBtn.addEventListener('click', () => {
-                window.location.href = 'ferris-wheel.html';
             });
         }
 
@@ -397,7 +477,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         status: 'Released',
                         state: 'Unused',
                         claim: 'Unclaimed',
-                        points: 0,
+                        points: 'None',
+                        booth: boothName,
                         createdAt: serverTimestamp(),
                         ticketNumber: ticketNumber
                     });
@@ -408,6 +489,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     showMessage(`Error adding ticket ${ticketNumber}: ${error.message}`, 'error');
                 }
             });
+        }
+
+        // Add count tickets button handler
+        if (countTicketsBtn) {
+            countTicketsBtn.addEventListener('click', countTotalTickets);
         }
 
     } catch (error) {
