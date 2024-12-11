@@ -1,6 +1,7 @@
 import { db, auth } from './firebase-config.js';
 import { signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { doc, getDoc, updateDoc, serverTimestamp, setDoc, collection, query, orderBy, limit, getDocs, runTransaction } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { handleExportData } from './export-data.js';
 
 // Initialize DOM elements
 let ticketForm, messageDiv, logoutBtn, loadingText, ticketNumberInput,
@@ -719,6 +720,20 @@ document.addEventListener('DOMContentLoaded', () => {
             claimBingoBtn.addEventListener('click', () => {
                 window.location.href = 'claim-bingo.html';
             });
+        }
+
+        // Add search ticket button handler
+        const searchTicketBtn = document.getElementById('searchTicketBtn');
+        if (searchTicketBtn) {
+            searchTicketBtn.addEventListener('click', () => {
+                window.location.href = 'search-ticket.html';
+            });
+        }
+
+        // Add export data button handler
+        const exportDataBtn = document.getElementById('exportDataBtn');
+        if (exportDataBtn) {
+            exportDataBtn.addEventListener('click', handleExportData);
         }
 
     } catch (error) {

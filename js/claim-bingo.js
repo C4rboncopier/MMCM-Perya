@@ -73,13 +73,40 @@ function checkAvailableRewards(bingoData) {
 function displayBingoDetails(bingoData) {
     cardInfo.innerHTML = `
         <div class="info-item">
-            <p><strong>Card Number:</strong> ${bingoData.number}</p>
-            <p><strong>Name:</strong> ${bingoData.name}</p>
-            <p><strong>Email:</strong> ${bingoData.email}</p>
-            <p><strong>Booths Visited:</strong> ${bingoData.boothVisits} / 21</p>
-            <p><strong>Free Ticket:</strong> ${bingoData.freeTicket}</p>
-            <p><strong>Raffle Entries:</strong> ${Array.isArray(bingoData.raffleEntries) ? bingoData.raffleEntries.join(', ') : 'None'}</p>
-            <p><strong>Bonus Points:</strong> ${bingoData.bonusPoints}</p>
+            <div class="detail-row">
+                <span class="detail-label">Card Number:</span>
+                <span class="detail-value">${bingoData.number}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Name:</span>
+                <span class="detail-value">${bingoData.name}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Email:</span>
+                <span class="detail-value">${bingoData.email}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Booths Visited:</span>
+                <span class="detail-value">${bingoData.boothVisits} / 21</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Free Ticket:</span>
+                <span class="detail-value">${bingoData.freeTicket}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Raffle Entries:</span>
+                <span class="detail-value">${Array.isArray(bingoData.raffleEntries) ? bingoData.raffleEntries.join(', ') : 'None'}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Bonus Points:</span>
+                <span class="detail-value">${bingoData.bonusPoints}</span>
+            </div>
+            <div class="booths-section">
+                <h3>Visited Booths:</h3>
+                <ul class="visited-booths-list">
+                    ${bingoData.visitedBooths ? bingoData.visitedBooths.map(booth => `<li>${booth}</li>`).join('') : '<li>No booths visited yet</li>'}
+                </ul>
+            </div>
         </div>
     `;
 

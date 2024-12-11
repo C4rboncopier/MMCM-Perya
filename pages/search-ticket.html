@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Ticket - Carnival</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/booth-pages.css">
+</head>
+<body>
+    <div class="container">
+        <div class="booth-container">
+            <div class="booth-card">
+                <img src="/images/hudyaka_logo.png" alt="Hudyaka Logo" class="logo">
+                <h1 class="booth-title">Search Ticket</h1>
+                <p class="booth-subtitle">Find ticket details</p>
+                
+                <!-- Search Form -->
+                <form id="searchForm" class="ticket-form">
+                    <div class="input-group">
+                        <label for="ticketNumber">Ticket Number</label>
+                        <input type="text" id="ticketNumber" required pattern="[0-9]+" placeholder="Enter ticket number">
+                    </div>
+                    <div class="loading-text">Searching ticket...</div>
+                    <div class="single-button">
+                        <button type="submit" class="action-button">Search Ticket</button>
+                    </div>
+                </form>
+
+                <!-- Ticket Details Section -->
+                <div id="ticketDetails" class="ticket-details" style="display: none;">
+                    <h2>Ticket Details</h2>
+                    <div class="details-list">
+                        <div class="detail-item">
+                            <span class="detail-label">Ticket Number:</span>
+                            <span id="detailNumber" class="detail-value"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Status:</span>
+                            <span id="detailStatus" class="detail-value"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">State:</span>
+                            <span id="detailState" class="detail-value"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Points:</span>
+                            <span id="detailPoints" class="detail-value"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Claim Status:</span>
+                            <span id="detailClaim" class="detail-value"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Used At:</span>
+                            <span id="detailUsedAt" class="detail-value"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Used By:</span>
+                            <span id="detailBooth" class="detail-value"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="message" class="message"></div>
+                <div class="single-button">
+                    <button id="backBtn" class="action-button">Back</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="../js/firebase-config.js"></script>
+    <script type="module" src="../js/auth-check.js"></script>
+    <script type="module" src="../js/search-ticket.js"></script>
+</body>
+</html> 

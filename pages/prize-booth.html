@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/booth-pages.css">
-    <link rel="stylesheet" href="../css/footer.css">
 </head>
 <body>
     <div class="container">
@@ -46,6 +45,12 @@
                                 <div class="single-button">
                                     <button type="button" id="claimBingoBtn" class="action-button">Claim Bingo Card</button>
                                 </div>
+                                <div class="single-button">
+                                    <button type="button" id="searchTicketBtn" class="action-button">Search Ticket</button>
+                                </div>
+                                <div class="single-button">
+                                    <button type="button" id="exportDataBtn" class="action-button">Export Data for Today</button>
+                                </div>
                             </div>
                         </form>
 
@@ -68,13 +73,11 @@
 
             <div id="message" class="message"></div>
         </div>
-        <footer class="footer">
-            <p>© 2024 MMCM Perya. Gimril Lozarita | All rights reserved.</p>
-        </footer>
     </div>
     
     <script type="module" src="../js/firebase-config.js"></script>
     <script type="module" src="../js/auth-check.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script type="module" src="../js/prize-booth.js"></script>
 </body>
 </html> 

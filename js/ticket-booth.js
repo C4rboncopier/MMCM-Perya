@@ -375,11 +375,20 @@ async function countTotalTickets() {
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         // Initialize Firebase first
-        const { db: firebaseDb } = await initializeFirebase();
+        const { db: firebaseDb, auth: firebaseAuth } = await initializeFirebase();
         initializedDb = firebaseDb;
 
         // Initialize DOM elements
         initializeDOMElements();
+
+        // Get booth name from localStorage
+        boothName = localStorage.getItem('boothName') || '';
+
+        // Add export data button handler
+        const exportDataBtn = document.getElementById('exportDataBtn');
+        if (exportDataBtn) {
+            exportDataBtn.addEventListener('click', handleExportData);
+        }
 
         // Setup real-time listener for highest ticket number
         const unsubscribe = setupHighestTicketListener();
@@ -501,6 +510,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (generateBingoBtn) {
             generateBingoBtn.addEventListener('click', () => {
                 window.location.href = 'bingo-card.html';
+            });
+        }
+
+        // Add search ticket button handler
+        const searchTicketBtn = document.getElementById('searchTicketBtn');
+        if (searchTicketBtn) {
+            searchTicketBtn.addEventListener('click', () => {
+                window.location.href = 'search-ticket.html';
             });
         }
 
