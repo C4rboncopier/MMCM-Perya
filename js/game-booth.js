@@ -1,26 +1,30 @@
 import { db, auth, initializeFirebase } from './firebase-config.js';
 import { signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-import { doc, getDoc, updateDoc, serverTimestamp, collection, query, where, orderBy, getDocs, writeBatch } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { doc, getDoc, updateDoc, serverTimestamp, collection, query, where, orderBy, getDocs, writeBatch, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
-let ticketForm, messageDiv, logoutBtn, loadingText, ticketNumberInput, scoreInput, submitButton, boothTitle, totalTicketsSpan, historyList;
+let ticketForm, ticketNumberInput, scoreInput, messageDiv, submitButton, loadingText,
+    totalTicketsSpan, historyList, logoutBtn, boothTitle, bingoVisitForm, bingoNumberInput;
 let initializedDb;
 let boothName = '';
 
 // Function to initialize DOM elements
 function initializeDOMElements() {
     ticketForm = document.getElementById('ticketForm');
-    messageDiv = document.getElementById('message');
-    logoutBtn = document.getElementById('logoutBtn');
-    loadingText = document.querySelector('.loading-text');
     ticketNumberInput = document.getElementById('ticketNumber');
     scoreInput = document.getElementById('score');
-    submitButton = ticketForm.querySelector('button[type="submit"]');
-    boothTitle = document.querySelector('.booth-title');
+    messageDiv = document.getElementById('message');
+    submitButton = ticketForm ? ticketForm.querySelector('button[type="submit"]') : null;
+    loadingText = document.querySelector('.loading-text');
     totalTicketsSpan = document.querySelector('.total-tickets');
     historyList = document.getElementById('historyList');
+    logoutBtn = document.getElementById('logoutBtn');
+    boothTitle = document.querySelector('.booth-title');
+    bingoVisitForm = document.getElementById('bingoVisitForm');
+    bingoNumberInput = document.getElementById('bingoNumber');
 
-    if (!ticketForm || !messageDiv || !logoutBtn || !loadingText || !ticketNumberInput || 
-        !scoreInput || !submitButton || !boothTitle || !totalTicketsSpan || !historyList) {
+    if (!ticketForm || !ticketNumberInput || !scoreInput || !messageDiv || !submitButton || 
+        !loadingText || !totalTicketsSpan || !historyList || !logoutBtn || !bingoVisitForm || 
+        !bingoNumberInput) {
         throw new Error('Required DOM elements not found');
     }
 
@@ -123,16 +127,32 @@ function padTicketNumber(number) {
     return number.toString().padStart(5, '0');
 }
 
-// Function to show loading state
-function setLoading(isLoading) {
-    loadingText.classList.toggle('visible', isLoading);
-    submitButton.disabled = isLoading;
-    ticketNumberInput.disabled = isLoading;
-    scoreInput.disabled = isLoading;
+// Function to set loading state
+function setLoading(isLoading, form = 'ticket') {
+    const loadingText = form === 'ticket' ? 
+        document.querySelector('#ticketForm .loading-text') : 
+        document.querySelector('#bingoVisitForm .loading-text');
     
-    // Focus the input when loading is done
-    if (!isLoading) {
-        setTimeout(() => ticketNumberInput.focus(), 0);
+    const submitBtn = form === 'ticket' ? 
+        ticketForm.querySelector('button[type="submit"]') : 
+        bingoVisitForm.querySelector('button[type="submit"]');
+
+    if (loadingText) loadingText.classList.toggle('visible', isLoading);
+    if (submitBtn) submitBtn.disabled = isLoading;
+
+    if (form === 'ticket') {
+        if (ticketNumberInput) ticketNumberInput.disabled = isLoading;
+        if (scoreInput) scoreInput.disabled = isLoading;
+        // Focus the input when loading is done
+        if (!isLoading) {
+            setTimeout(() => ticketNumberInput.focus(), 0);
+        }
+    } else {
+        if (bingoNumberInput) bingoNumberInput.disabled = isLoading;
+        // Focus the input when loading is done
+        if (!isLoading) {
+            setTimeout(() => bingoNumberInput.focus(), 0);
+        }
     }
 }
 
@@ -172,6 +192,68 @@ function showMessage(message, type) {
             messageElement.remove();
         }
     }, 5000);
+}
+
+// Function to generate raffle ticket number
+async function generateRaffleTicketNumber() {
+    try {
+        const counterRef = doc(db, 'system', 'raffleTicketCounter');
+        const counterSnap = await getDoc(counterRef);
+        
+        let currentNumber = 0;
+        if (counterSnap.exists()) {
+            currentNumber = counterSnap.data().currentNumber;
+            await updateDoc(counterRef, {
+                currentNumber: currentNumber + 1,
+                lastUpdated: serverTimestamp()
+            });
+        } else {
+            // Initialize the counter if it doesn't exist
+            await setDoc(counterRef, {
+                currentNumber: 1,
+                lastUpdated: serverTimestamp()
+            });
+            currentNumber = 0; // First ticket will be R0001
+        }
+        
+        const nextNumber = currentNumber + 1;
+        return 'R' + nextNumber.toString().padStart(4, '0');
+    } catch (error) {
+        console.error('Error generating raffle ticket number:', error);
+        throw error;
+    }
+}
+
+// Function to generate raffle entries for bingo card
+async function generateRaffleEntries(bingoNumber) {
+    try {
+        // Generate 2 raffle tickets
+        const raffleTicket1 = await generateRaffleTicketNumber();
+        const raffleTicket2 = await generateRaffleTicketNumber();
+        
+        // Create raffle tickets in Firestore
+        const raffleRef1 = doc(db, 'raffleTickets', raffleTicket1);
+        const raffleRef2 = doc(db, 'raffleTickets', raffleTicket2);
+        
+        await setDoc(raffleRef1, {
+            ticketNumber: raffleTicket1,
+            bingoCard: bingoNumber,
+            createdAt: serverTimestamp(),
+            status: 'Active'
+        });
+        
+        await setDoc(raffleRef2, {
+            ticketNumber: raffleTicket2,
+            bingoCard: bingoNumber,
+            createdAt: serverTimestamp(),
+            status: 'Active'
+        });
+        
+        return [raffleTicket1, raffleTicket2];
+    } catch (error) {
+        console.error('Error generating raffle entries:', error);
+        throw error;
+    }
 }
 
 // Initialize the page
@@ -217,6 +299,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Validate score
                 if (isNaN(score) || score < 0) {
                     showMessage('Please enter a valid score', 'error');
+                    return;
+                }
+
+                // Validate maximum score
+                if (score > 15) {
+                    showMessage('Maximum score allowed is 15 points', 'error');
                     return;
                 }
 
@@ -340,11 +428,118 @@ document.addEventListener('DOMContentLoaded', async () => {
             ticketNumberInput.addEventListener('input', function(e) {
                 // Remove any non-digit characters
                 let value = this.value.replace(/\D/g, '');
-                
-                // Update the input value with the cleaned number
                 this.value = value;
             });
         }
+
+        // Add input event listener for score validation
+        if (scoreInput) {
+            scoreInput.addEventListener('input', function(e) {
+                const value = parseInt(this.value);
+                if (value > 15) {
+                    this.value = 15;
+                    showMessage('Maximum score allowed is 15 points', 'error');
+                }
+            });
+        }
+
+        // Function to format bingo number
+        function formatBingoNumber(input) {
+            // Remove any spaces and convert to uppercase
+            input = input.trim().toUpperCase();
+            
+            // If it's already in the correct format (B followed by numbers), return it
+            if (input.match(/^B\d+$/)) {
+                return input;
+            }
+            
+            // If it's just numbers, pad it and add the B prefix
+            if (input.match(/^\d+$/)) {
+                return 'B' + input.padStart(4, '0');
+            }
+            
+            return null;
+        }
+
+        // Function to handle bingo card visit
+        async function handleBingoVisit(e) {
+            e.preventDefault();
+            
+            const rawBingoNumber = bingoNumberInput.value.trim();
+            const bingoNumber = formatBingoNumber(rawBingoNumber);
+            
+            // Validate bingo number format
+            if (!bingoNumber) {
+                showMessage('Please enter a valid bingo card number or ID', 'error');
+                return;
+            }
+            
+            setLoading(true, 'bingo');
+            
+            try {
+                const bingoRef = doc(db, 'bingoCards', bingoNumber);
+                const bingoSnap = await getDoc(bingoRef);
+                
+                if (!bingoSnap.exists()) {
+                    showMessage('Bingo card not found!', 'error');
+                    setLoading(false, 'bingo');
+                    return;
+                }
+                
+                const bingoData = bingoSnap.data();
+                const boothName = localStorage.getItem('gameName');
+                
+                // Check if this booth has already been visited
+                if (bingoData.visitedBooths && bingoData.visitedBooths.includes(boothName)) {
+                    showMessage('This booth has already been visited with this bingo card!', 'error');
+                    setLoading(false, 'bingo');
+                    return;
+                }
+                
+                // Update bingo card with new visit
+                const updatedVisits = [...(bingoData.visitedBooths || []), boothName];
+                const updates = {
+                    visitedBooths: updatedVisits,
+                    boothVisits: updatedVisits.length,
+                    lastUpdated: serverTimestamp()
+                };
+
+                // Check if this visit makes it the 14th booth and raffle entries haven't been claimed
+                if (updatedVisits.length === 14 && bingoData.raffleEntries === 'None') {
+                    try {
+                        const raffleTickets = await generateRaffleEntries(bingoNumber);
+                        updates.raffleEntries = raffleTickets;
+                        showMessage(`Bingo card visit recorded and raffle tickets (${raffleTickets.join(', ')}) generated successfully!`, 'success');
+                    } catch (error) {
+                        console.error('Error generating raffle tickets:', error);
+                        showMessage('Visit recorded but there was an error generating raffle tickets.', 'warning');
+                    }
+                } 
+                // Check if this is the 21st booth visit
+                else if (updatedVisits.length === 21 && bingoData.bonusPoints === 'None') {
+                    updates.bonusPoints = '100';
+                    updates.status = 'Completed';
+                    showMessage('Congratulations! Your bingo card is now worth 100 points!', 'success');
+                } else {
+                    showMessage('Bingo card visit recorded successfully!', 'success');
+                }
+
+                await updateDoc(bingoRef, updates);
+                bingoNumberInput.value = '';
+                
+            } catch (error) {
+                console.error('Error recording bingo visit:', error);
+                showMessage('Error recording visit. Please try again.', 'error');
+            } finally {
+                setLoading(false, 'bingo');
+            }
+        }
+
+        // Add event listener for bingo visit form
+        if (bingoVisitForm) {
+            bingoVisitForm.addEventListener('submit', handleBingoVisit);
+        }
+
     } catch (error) {
         console.error('Error initializing Game booth:', error);
         showMessage('Error initializing the application', 'error');

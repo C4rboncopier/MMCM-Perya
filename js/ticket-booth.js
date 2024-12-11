@@ -496,6 +496,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             countTicketsBtn.addEventListener('click', countTotalTickets);
         }
 
+        // Add generate bingo card button handler
+        const generateBingoBtn = document.getElementById('generateBingoBtn');
+        if (generateBingoBtn) {
+            generateBingoBtn.addEventListener('click', () => {
+                window.location.href = 'bingo-card.html';
+            });
+        }
+
     } catch (error) {
         console.error('Error initializing ticket booth:', error);
         showMessage('Error initializing the application', 'error');

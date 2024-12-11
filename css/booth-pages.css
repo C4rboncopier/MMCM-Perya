@@ -101,11 +101,19 @@
 }
 
 .counter-info {
+    background-color: var(--light-bg);
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    margin: 1rem 0;
     text-align: center;
-    margin-bottom: 1.5rem;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     color: var(--dark-color);
-    font-weight: 500;
+}
+
+.counter-info span {
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-left: 0.25rem;
 }
 
 .button-group {
@@ -1105,4 +1113,75 @@
         transform: translateY(0);
         opacity: 1;
     }
+} 
+
+/* Dialog styles */
+.dialog {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.dialog-content {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    width: 90%;
+}
+
+.dialog-content h2 {
+    margin-top: 0;
+    color: var(--dark-color);
+    margin-bottom: 1.5rem;
+}
+
+.rewards-details {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.rewards-details p {
+    margin: 0.5rem 0;
+    font-size: 1.1rem;
+}
+
+.reward-item {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.reward-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.reward-item p {
+    margin: 0.5rem 0;
+}
+
+.reward-item small {
+    color: var(--text-muted);
+}
+
+.dialog-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}
+
+.dialog-buttons button {
+    min-width: 100px;
 } 

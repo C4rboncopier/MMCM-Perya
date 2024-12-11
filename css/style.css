@@ -103,6 +103,11 @@ body {
     opacity: 0.9;
 }
 
+.bingo-number {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
 .action-button {
     background: var(--primary-color);
     color: var(--light-color);

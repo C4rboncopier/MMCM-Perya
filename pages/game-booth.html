@@ -22,6 +22,7 @@
                     <p>Total Tickets Collected: <span class="total-tickets">0</span></p>
                 </div>
 
+                <!-- Ticket Form -->
                 <form id="ticketForm" class="ticket-form">
                     <div class="input-group">
                         <label for="ticketNumber">Ticket Number</label>
@@ -29,11 +30,24 @@
                     </div>
                     <div class="input-group">
                         <label for="score">Score</label>
-                        <input type="number" id="score" required min="0" placeholder="Enter player's score">
+                        <input type="number" id="score" required min="0" max="15" placeholder="Enter player's score">
                     </div>
                     <div class="loading-text">Verifying ticket...</div>
                     <div class="single-button">
                         <button type="submit" class="action-button">Collect Ticket</button>
+                    </div>
+                </form>
+
+                <!-- Bingo Card Visit Form -->
+                <form id="bingoVisitForm" class="ticket-form">
+                    <div class="input-group">
+                        <label for="bingoNumber">Bingo Card Number</label>
+                        <input type="text" id="bingoNumber" required pattern="(B[0-9]+|[0-9]+)" placeholder="Enter bingo card number or ID">
+                        <small class="input-hint">Enter full number (e.g., B0001) or just the ID (e.g., 1)</small>
+                    </div>
+                    <div class="loading-text">Recording visit...</div>
+                    <div class="single-button">
+                        <button type="submit" class="action-button">Record Visit</button>
                     </div>
                 </form>
 

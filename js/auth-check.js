@@ -50,6 +50,17 @@ async function checkBoothAccess(user) {
         'prize-booth': '/pages/prize-booth.html'
     };
 
+    // Special handling for bingo card page
+    if (currentPage.includes('bingo-card.html')) {
+        // Only ticket booth users can access the bingo card page
+        if (boothType !== 'ticket-booth') {
+            window.location.href = boothUrls[boothType];
+            return;
+        }
+        // If it's a ticket booth user on the bingo page, allow access
+        return;
+    }
+
     // Check if we're on a booth page but it's the wrong one
     if (currentPage.includes('booth') && !currentPage.includes(boothType)) {
         window.location.href = boothUrls[boothType];

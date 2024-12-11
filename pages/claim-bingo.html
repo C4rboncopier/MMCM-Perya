@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claim Bingo Rewards - Carnival</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/booth-pages.css">
+</head>
+<body>
+    <div class="container">
+        <div class="booth-container">
+            <!-- Two Column Layout -->
+            <div class="booth-grid">
+                <!-- Left Column -->
+                <div class="booth-column left-column">
+                    <div class="booth-card">
+                        <img src="/images/hudyaka_logo.png" alt="Hudyaka Logo" class="logo">
+                        <h1 class="booth-title">Claim Bingo Rewards</h1>
+                        <p class="booth-subtitle">Check and claim bingo card rewards</p>
+                        <p class="counter-info">Total Free Tickets Released: <span id="freeTicketsCount">Loading...</span></p>
+
+                        <form id="bingoCheckForm" class="ticket-form">
+                            <div class="input-group">
+                                <label for="bingoNumber">Bingo Card Number</label>
+                                <input type="text" id="bingoNumber" required pattern="(B[0-9]+|[0-9]+)" placeholder="Enter bingo card number or ID">
+                                <small class="input-hint">Enter full number (e.g., B0001) or just the ID (e.g., 1)</small>
+                            </div>
+                            <div class="loading-text">Checking bingo card...</div>
+                            <div class="single-button">
+                                <button type="submit" class="action-button">Check Card</button>
+                            </div>
+                        </form>
+
+                        <div id="message" class="message"></div>
+                        <div class="single-button">
+                            <button id="backToBoothBtn" class="action-button">Back to Prize Booth</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="booth-column right-column">
+                    <div class="booth-card">
+                        <div id="bingoDetails" class="bingo-details">
+                            <h2>Bingo Card Details</h2>
+                            <div id="cardInfo" class="card-info">
+                                <!-- Card details will be populated here -->
+                            </div>
+                            <div id="rewardsSection" class="rewards-section" style="display: none;">
+                                <h3>Available Rewards</h3>
+                                <div id="rewardsList" class="rewards-list">
+                                    <!-- Rewards will be populated here -->
+                                </div>
+                                <div class="single-button">
+                                    <button id="claimRewardsBtn" class="action-button">Claim Rewards</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rewards Dialog -->
+    <div id="rewardsDialog" class="dialog">
+        <div class="dialog-content">
+            <h2>Confirm Rewards</h2>
+            <div id="rewardsDetails" class="rewards-details"></div>
+            <div class="dialog-buttons">
+                <button id="confirmRewardsBtn" class="action-button">Confirm</button>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="../js/firebase-config.js"></script>
+    <script type="module" src="../js/auth-check.js"></script>
+    <script type="module" src="../js/claim-bingo.js"></script>
+</body>
+</html> 

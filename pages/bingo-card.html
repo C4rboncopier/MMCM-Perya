@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo Card Generator - Carnival</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/booth-pages.css">
+</head>
+<body>
+    <div class="container">
+        <div class="booth-container">
+            <div class="booth-card">
+                <img src="/images/hudyaka_logo.png" alt="Hudyaka Logo" class="logo">
+                <h1 class="booth-title">Bingo Card Generator</h1>
+                <p class="booth-subtitle">Generate your bingo card</p>
+
+                <form id="bingoForm" class="ticket-form">
+                    <div class="input-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" required placeholder="Enter your full name">
+                    </div>
+                    <div class="input-group">
+                        <label for="email">School Email</label>
+                        <input type="email" id="email" required pattern=".*@mcm\.edu\.ph$" placeholder="Enter your school email">
+                        <small class="input-hint">Must end with @mcm.edu.ph</small>
+                    </div>
+                    <div class="loading-text">Generating bingo card...</div>
+                    <div class="single-button">
+                        <button type="submit" class="action-button">Generate Card</button>
+                    </div>
+                </form>
+
+                <!-- Results Section (Initially Hidden) -->
+                <div id="resultsSection" class="ticket-form" style="display: none;">
+                    <h2>Your Bingo Card</h2>
+                    <div id="bingoCardInfo" class="bingo-info"></div>
+                    <div class="single-button">
+                        <button id="backBtn" class="action-button">Generate Another Card</button>
+                    </div>
+                </div>
+
+                <div id="message" class="message"></div>
+                <div class="single-button">
+                    <button id="backToBoothBtn" class="action-button">Back to Ticket Booth</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="../js/firebase-config.js"></script>
+    <script type="module" src="../js/auth-check.js"></script>
+    <script type="module" src="../js/bingo-card.js"></script>
+</body>
+</html> 
