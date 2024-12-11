@@ -144,6 +144,28 @@ function showPopup(message, isConfirm = false) {
     messageElement.textContent = message;
     popup.appendChild(messageElement);
 
+    // Create loading spinner (hidden by default)
+    const loadingSpinner = document.createElement('div');
+    loadingSpinner.style.cssText = `
+        display: none;
+        width: 40px;
+        height: 40px;
+        margin: 0 auto 20px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #4CAF50;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    `;
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = `
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(styleSheet);
+    popup.appendChild(loadingSpinner);
+
     // Add buttons container
     const buttonsContainer = document.createElement('div');
     buttonsContainer.style.cssText = `
@@ -174,7 +196,10 @@ function showPopup(message, isConfirm = false) {
             yesButton.onmouseover = () => yesButton.style.backgroundColor = '#45a049';
             yesButton.onmouseout = () => yesButton.style.backgroundColor = '#4CAF50';
             yesButton.onclick = () => {
-                document.body.removeChild(overlay);
+                // Show loading spinner and hide buttons
+                loadingSpinner.style.display = 'block';
+                buttonsContainer.style.display = 'none';
+                messageElement.textContent = 'Exporting data...';
                 resolve(true);
             };
 
@@ -230,7 +255,7 @@ async function generatePDF() {
         // Add title with formatted date
         doc.setFontSize(16);
         doc.text('Daily Report - ' + new Date().toLocaleDateString(), 20, y);
-        y += 20;
+        y += 10;
         
         // Add game booth data
         doc.setFontSize(14);
@@ -304,6 +329,11 @@ export async function handleExportData() {
     const confirmed = await showPopup('Do you want to export today\'s data?', true);
     if (confirmed) {
         const success = await generatePDF();
+        // Remove any existing overlays before showing the result
+        const existingOverlay = document.querySelector('div[style*="position: fixed"]');
+        if (existingOverlay) {
+            document.body.removeChild(existingOverlay);
+        }
         if (success) {
             await showPopup('Data exported successfully!');
         } else {
