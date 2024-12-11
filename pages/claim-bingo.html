@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/booth-pages.css">
+    <link rel="stylesheet" href="../css/footer.css">
 </head>
 <body>
     <div class="container">
@@ -45,25 +46,17 @@
                 <!-- Right Column -->
                 <div class="booth-column right-column">
                     <div class="booth-card">
-                        <div id="bingoDetails" class="bingo-details">
-                            <h2>Bingo Card Details</h2>
-                            <div id="cardInfo" class="card-info">
-                                <!-- Card details will be populated here -->
-                            </div>
-                            <div id="rewardsSection" class="rewards-section" style="display: none;">
-                                <h3>Available Rewards</h3>
-                                <div id="rewardsList" class="rewards-list">
-                                    <!-- Rewards will be populated here -->
-                                </div>
-                                <div class="single-button">
-                                    <button id="claimRewardsBtn" class="action-button">Claim Rewards</button>
-                                </div>
-                            </div>
+                        <div id="bingoHistorySection" class="ticket-list-container">
+                            <h2>Bingo Card History</h2>
+                            <div id="bingoHistoryList" class="ticket-list"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+        <footer class="footer">
+            <p>© 2024 MMCM Perya. Gimril Lozarita | All rights reserved.</p>
+        </footer>
     </div>
 
     <!-- Rewards Dialog -->
