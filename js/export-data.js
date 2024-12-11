@@ -64,16 +64,36 @@ async function getBingoCardsData() {
     
     let totalCards = 0;
     let totalRaffleEntries = 0;
+    let totalFreeTickets = 0;
+    
+    console.log('Total documents found:', bingoCardsSnap.size);
     
     bingoCardsSnap.forEach(doc => {
         totalCards++;
         const data = doc.data();
-        if (data.raffleEntries) {
-            totalRaffleEntries += parseInt(data.raffleEntries) || 0;
+        console.log('Processing bingo card:', doc.id);
+        console.log('Card data:', data);
+        
+        // Count raffle entries (2 per bingo card if not 'None')
+        if (data.raffleEntries && data.raffleEntries !== 'None') {
+            totalRaffleEntries += 2; // Always 2 raffle entries per qualifying card
+            console.log(`Added 2 raffle entries for card ${doc.id}. Total now: ${totalRaffleEntries}`);
+        }
+        
+        // Count free tickets (if not 'Unclaimed')
+        if (data.freeTicket && data.freeTicket !== 'Unclaimed') {
+            totalFreeTickets++;
+            console.log(`Counted free ticket for card ${doc.id}. Total now: ${totalFreeTickets}`);
         }
     });
     
-    return { totalCards, totalRaffleEntries };
+    console.log('Final counts:', {
+        totalCards,
+        totalRaffleEntries,
+        totalFreeTickets
+    });
+    
+    return { totalCards, totalRaffleEntries, totalFreeTickets };
 }
 
 // Function to format date for filename
@@ -236,22 +256,6 @@ async function generatePDF() {
             y = 20;
         }
         
-        // Add system data
-        doc.setFontSize(14);
-        doc.text('System Data:', 20, y);
-        y += 10;
-        
-        const freeTicketsCount = await getSystemData();
-        doc.setFontSize(12);
-        doc.text(`Free Tickets Counter: ${freeTicketsCount}`, 30, y);
-        y += 20;
-        
-        // Check if we need a new page
-        if (y > 220) {
-            doc.addPage();
-            y = 20;
-        }
-        
         // Add tickets data
         doc.setFontSize(14);
         doc.text('Tickets Data:', 20, y);
@@ -279,6 +283,8 @@ async function generatePDF() {
         const bingoData = await getBingoCardsData();
         doc.setFontSize(12);
         doc.text(`Total Bingo Cards: ${bingoData.totalCards}`, 30, y);
+        y += 10;
+        doc.text(`Total Free Tickets Claimed: ${bingoData.totalFreeTickets}`, 30, y);
         y += 10;
         doc.text(`Total Raffle Entries: ${bingoData.totalRaffleEntries}`, 30, y);
         
