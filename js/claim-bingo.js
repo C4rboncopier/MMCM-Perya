@@ -404,22 +404,33 @@ async function processRewards() {
             const raffleTicket1 = await generateRaffleTicketNumber();
             const raffleTicket2 = await generateRaffleTicketNumber();
             
-            // Create raffle tickets in Firestore
+            // Create raffle tickets in Firestore with email and name from currentBingoCard
             const raffleRef1 = doc(initializedDb, 'raffleTickets', raffleTicket1);
             const raffleRef2 = doc(initializedDb, 'raffleTickets', raffleTicket2);
             
-            await setDoc(raffleRef1, {
-                ticketNumber: raffleTicket1,
-                bingoCard: data.number,
+            // Log the data to verify we have the correct information
+            console.log('Current Bingo Card Data:', currentBingoCard.data);
+            
+            const raffleTicketData = {
+                ticketNumber: '',
+                bingoCard: currentBingoCard.data.number,
+                email: currentBingoCard.data.email,
+                name: currentBingoCard.data.name,
                 createdAt: serverTimestamp(),
                 status: 'Active'
+            };
+            
+            // Log the raffle ticket data before creating
+            console.log('Raffle Ticket Data:', raffleTicketData);
+            
+            await setDoc(raffleRef1, {
+                ...raffleTicketData,
+                ticketNumber: raffleTicket1
             });
             
             await setDoc(raffleRef2, {
-                ticketNumber: raffleTicket2,
-                bingoCard: data.number,
-                createdAt: serverTimestamp(),
-                status: 'Active'
+                ...raffleTicketData,
+                ticketNumber: raffleTicket2
             });
             
             // Store raffle entries as an array

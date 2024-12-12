@@ -225,7 +225,7 @@ async function generateRaffleTicketNumber() {
 }
 
 // Function to generate raffle entries for bingo card
-async function generateRaffleEntries(bingoNumber) {
+async function generateRaffleEntries(bingoNumber, bingoData) {
     try {
         // Generate 2 raffle tickets
         const raffleTicket1 = await generateRaffleTicketNumber();
@@ -235,18 +235,23 @@ async function generateRaffleEntries(bingoNumber) {
         const raffleRef1 = doc(db, 'raffleTickets', raffleTicket1);
         const raffleRef2 = doc(db, 'raffleTickets', raffleTicket2);
         
-        await setDoc(raffleRef1, {
-            ticketNumber: raffleTicket1,
+        const ticketData = {
+            ticketNumber: '',  // Will be set individually
             bingoCard: bingoNumber,
+            email: bingoData.email,     // Add email from bingo data
+            name: bingoData.name,       // Add name from bingo data
             createdAt: serverTimestamp(),
             status: 'Active'
+        };
+        
+        await setDoc(raffleRef1, {
+            ...ticketData,
+            ticketNumber: raffleTicket1
         });
         
         await setDoc(raffleRef2, {
-            ticketNumber: raffleTicket2,
-            bingoCard: bingoNumber,
-            createdAt: serverTimestamp(),
-            status: 'Active'
+            ...ticketData,
+            ticketNumber: raffleTicket2
         });
         
         return [raffleTicket1, raffleTicket2];
@@ -504,10 +509,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     lastUpdated: serverTimestamp()
                 };
 
-                // Check if this visit makes it the 14th booth and raffle entries haven't been claimed
+                // Check if this visit makes it the 14th booth visit
                 if (updatedVisits.length === 14 && bingoData.raffleEntries === 'None') {
                     try {
-                        const raffleTickets = await generateRaffleEntries(bingoNumber);
+                        const raffleTickets = await generateRaffleEntries(bingoNumber, bingoData);
                         updates.raffleEntries = raffleTickets;
                         showMessage(`Bingo card visit recorded and raffle tickets (${raffleTickets.join(', ')}) generated successfully!`, 'success');
                     } catch (error) {

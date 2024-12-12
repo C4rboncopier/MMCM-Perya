@@ -36,21 +36,39 @@ function setLoading(isLoading) {
     }
 }
 
+// Function to initialize bingo counter if it doesn't exist
+async function initializeBingoCounter() {
+    const systemDocRef = doc(db, 'system', 'bingoCounter');
+    const systemDoc = await getDoc(systemDocRef);
+    
+    if (!systemDoc.exists()) {
+        await setDoc(systemDocRef, {
+            currentNumber: 0
+        });
+    }
+}
+
 // Function to get the next bingo number
 async function getNextBingoNumber() {
     try {
-        // Query the last bingo card to get the highest number
-        const bingoCardsRef = collection(db, 'bingoCards');
-        const q = query(bingoCardsRef, orderBy('number', 'desc'), limit(1));
-        const querySnapshot = await getDocs(q);
+        // Get the counter document
+        const systemDocRef = doc(db, 'system', 'bingoCounter');
+        const systemDoc = await getDoc(systemDocRef);
         
-        if (querySnapshot.empty) {
-            return 1; // Start from 1 if no cards exist
+        if (!systemDoc.exists()) {
+            await initializeBingoCounter();
         }
         
-        const lastCard = querySnapshot.docs[0].data();
-        const lastNumber = parseInt(lastCard.number.substring(1)); // Remove 'B' prefix
-        return lastNumber + 1;
+        // Get the current number and increment it
+        const currentData = systemDoc.data();
+        const nextNumber = (currentData?.currentNumber || 0) + 1;
+        
+        // Update the counter in the system collection
+        await setDoc(systemDocRef, {
+            currentNumber: nextNumber
+        });
+        
+        return nextNumber;
     } catch (error) {
         console.error('Error getting next bingo number:', error);
         throw error;
