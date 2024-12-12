@@ -207,6 +207,7 @@ function showConfirmationDialog(message, onConfirm, onCancel) {
         <div class="dialog-content">
             <h3>Confirm Redemption</h3>
             <p>${message}</p>
+            <div class="loading-spinner"></div>
             <div class="dialog-buttons">
                 <button class="action-button confirm-button">Yes</button>
                 <button class="action-button cancel-button">No</button>
@@ -223,6 +224,7 @@ function showConfirmationDialog(message, onConfirm, onCancel) {
     // Add event listeners
     const confirmBtn = dialog.querySelector('.confirm-button');
     const cancelBtn = dialog.querySelector('.cancel-button');
+    const loadingSpinner = dialog.querySelector('.loading-spinner');
     
     // Function to remove dialog
     const removeDialog = () => {
@@ -231,8 +233,18 @@ function showConfirmationDialog(message, onConfirm, onCancel) {
     
     // Add click handlers
     confirmBtn.addEventListener('click', async () => {
-        await onConfirm();
-        removeDialog();
+        // Show loading state
+        loadingSpinner.style.display = 'block';
+        confirmBtn.disabled = true;
+        cancelBtn.disabled = true;
+        confirmBtn.style.opacity = '0.7';
+        cancelBtn.style.opacity = '0.7';
+        
+        try {
+            await onConfirm();
+        } finally {
+            removeDialog();
+        }
     });
     
     cancelBtn.addEventListener('click', () => {
@@ -633,6 +645,22 @@ style.textContent = `
     .dialog-buttons .cancel-button:hover {
         background-color: var(--danger-dark, #b91c1c);
     }
+
+    .loading-spinner {
+        display: none;
+        width: 30px;
+        height: 30px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid var(--primary-color, #2563eb);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 10px auto;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
 `;
 
 // Add the styles to the document head
@@ -653,7 +681,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add hint text below the input
             const hintText = document.createElement('small');
             hintText.className = 'input-hint';
-            hintText.textContent = 'For bingo cards, enter the complete number (e.g., B0001)';
+            hintText.textContent = 'For bingo cards, enter the complete number (e.g., B0001, B00010)';
             ticketNumberInput.parentNode.insertBefore(hintText, ticketNumberInput.nextSibling);
 
             // Add input event listener to format the ticket number as user types

@@ -1204,6 +1204,14 @@
     text-align: center;
 } 
 
+@media (max-width: 768px) {
+    .visited-booths-list {
+        grid-template-columns: 1fr;
+        max-width: 300px;
+        margin: 0.5rem auto;
+    }
+} 
+
 /* Ticket Details Styles */
 .ticket-details {
     margin-top: 2rem;
@@ -1283,4 +1291,39 @@
     color: var(--dark-color);
     margin-bottom: 0.75rem;
     font-weight: 650;
+} 
+
+@media (max-width: 768px) {
+    .info-item {
+        padding: 0.75rem;
+    }
+
+    .detail-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+        padding: 0.75rem;
+    }
+
+    .detail-row .detail-label {
+        min-width: unset;
+        width: 100%;
+        margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+    }
+
+    .detail-row .detail-value {
+        width: 100%;
+        font-size: 0.9rem;
+        word-break: break-word;
+    }
+
+    .booths-section {
+        margin-top: 1rem;
+    }
+
+    .booths-section h3 {
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+    }
 } 
